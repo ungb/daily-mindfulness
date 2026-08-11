@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Build and follow a simple, private daily mindfulness routine in your browser.">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#EEF1EA">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-0qtqHVhBuu+u1dLdXlsNGGiyjGAFWA+OCUzKB0R4POE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+<title>Daily Mindfulness Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&amp;family=Albert+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF1EA;
+    --card: #F8FAF6;
+    --ink: #1F2E27;
+    --muted: #5C6B62;
+    --faint: #5F7066;
+    --accent: #4E7A66;
+    --accent-deep: #3A5F4E;
+    --accent-soft: #DCE7DF;
+    --amber: #765B2E;
+    --amber-soft: #F0E6D2;
+    --line: #74847B;
+    --radius: 14px;
+    --display: "Newsreader", Georgia, serif;
+    --body: "Albert Sans", -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.6;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px 48px;
+  }
+  .app { width: 100%; max-width: 560px; }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 6px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 34px;
+    line-height: 1.15;
+    margin-bottom: 8px;
+  }
+  h2 {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+  .sub { color: var(--muted); font-size: 15px; }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: fade 0.45s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .qblock { margin: 28px 0; }
+  .qlabel { font-weight: 600; font-size: 15px; margin-bottom: 12px; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .opt {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--body);
+    font-size: 15px;
+    color: var(--ink);
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .opt:hover { border-color: var(--accent); }
+  .opt.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .opt small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+  button:focus-visible, input:focus-visible {
+    outline: 3px solid var(--amber);
+    outline-offset: 3px;
+  }
+
+  .btn {
+    font-family: var(--body);
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 999px;
+    padding: 13px 28px;
+    cursor: pointer;
+    background: var(--accent);
+    color: #fff;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .btn:hover { background: var(--accent-deep); }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { background: var(--line); color: var(--faint); cursor: not-allowed; }
+  .btn.ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1.5px solid var(--line);
+  }
+  .btn.ghost:hover { border-color: var(--accent); color: var(--accent-deep); background: transparent; }
+  .btnrow { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+
+  .slider-row { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+  input[type="range"] {
+    flex: 1; accent-color: var(--accent); height: 4px;
+  }
+  .slider-val { font-family: var(--display); font-size: 22px; min-width: 74px; text-align: right; }
+
+  .plan-list { margin: 22px 0; display: flex; flex-direction: column; gap: 10px; }
+  .plan-item {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .plan-item .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent); flex-shrink: 0;
+  }
+  .plan-item .info { flex: 1; min-width: 0; }
+  .plan-item .name { font-weight: 600; font-size: 15px; }
+  .plan-item .desc { font-size: 13px; color: var(--muted); }
+  .stepper { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .stepper button {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1.5px solid var(--line);
+    background: transparent; color: var(--ink);
+    font-size: 17px; line-height: 1; cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .stepper button:hover { border-color: var(--accent); }
+  .stepper .mins { font-family: var(--display); font-size: 17px; min-width: 52px; text-align: center; }
+  .total-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 6px 4px 0; font-size: 14px; color: var(--muted);
+  }
+  .total-row strong { font-family: var(--display); font-size: 20px; color: var(--ink); font-weight: 500; }
+
+  .breath-choice { display: flex; gap: 10px; margin-top: 12px; }
+  .breath-choice .opt { flex: 1; }
+
+  .session-top { text-align: center; margin-bottom: 4px; }
+  .session-top .exname { font-family: var(--display); font-size: 24px; font-weight: 500; margin-bottom: 0; }
+  .session-top .exstep { font-size: 13px; color: var(--faint); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  .orb-wrap { position: relative; width: 300px; height: 300px; margin: 18px auto; }
+  .orb-wrap svg.ring { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 3; }
+  .ring .track { stroke: var(--line); }
+  .ring .prog { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  .orb {
+    position: absolute; top: 50%; left: 50%;
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    border: 1.5px solid var(--accent);
+    transform: translate(-50%, -50%) scale(1);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 4s linear, background 0.6s ease, border-color 0.6s ease;
+  }
+  .orb.hold { background: var(--amber-soft); border-color: var(--amber); }
+  .orb .phase {
+    font-family: var(--display); font-style: italic;
+    font-size: 19px; color: var(--accent-deep);
+    text-align: center; padding: 0 12px;
+  }
+  .orb.hold .phase { color: var(--amber); }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  .timers { display: flex; justify-content: center; gap: 36px; margin: 6px 0 20px; }
+  .timers .t { text-align: center; }
+  .timers .t .big { font-family: var(--display); font-size: 30px; font-weight: 500; }
+  .timers .t .lbl { font-size: 12px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .guide {
+    text-align: center; color: var(--muted); font-size: 15px;
+    max-width: 420px; margin: 0 auto 22px; min-height: 48px;
+    font-family: var(--display); font-style: italic; font-size: 18px;
+  }
+
+  .session-controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  .btnrow.centered { justify-content: center; }
+
+  .overall-bar {
+    height: 4px; background: var(--line); border-radius: 2px;
+    margin: 26px 0 8px; overflow: hidden;
+  }
+  .overall-bar .fill { height: 100%; width: 0%; background: var(--accent); border-radius: 2px; transition: width 1s linear; }
+  .overall-lbl { font-size: 12px; color: var(--faint); text-align: center; }
+
+  .done-center { text-align: center; padding: 40px 0; }
+  .done-center .mark {
+    width: 74px; height: 74px; border-radius: 50%;
+    background: var(--accent-soft); border: 1.5px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px; font-size: 30px; color: var(--accent-deep);
+  }
+
+  .info-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1.5px solid var(--line);
+    background: transparent; color: var(--muted);
+    font-family: var(--display); font-style: italic; font-size: 15px;
+    line-height: 1; cursor: pointer; flex-shrink: 0;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .info-btn:hover { border-color: var(--accent); color: var(--accent-deep); }
+  .info-btn.inline { vertical-align: 3px; margin-left: 8px; }
+
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(31, 46, 39, 0.35);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px; z-index: 10;
+  }
+  .modal-backdrop.open { display: flex; animation: fade 0.25s ease; }
+  .modal {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    max-width: 480px; width: 100%;
+    max-height: 80vh; overflow-y: auto;
+    padding: 26px 26px 22px;
+  }
+  .modal h2 { margin-bottom: 14px; }
+  .modal h3 {
+    font-family: var(--body); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent-deep); margin: 16px 0 4px;
+  }
+  .modal p { font-size: 15px; color: var(--ink); }
+  .modal .close-row { text-align: right; margin-top: 20px; }
+
+  .footer-note { margin-top: 34px; font-size: 13px; color: var(--faint); text-align: center; }
+  .linklike {
+    background: none; border: none; color: var(--accent-deep);
+    font-family: var(--body); font-size: 13px; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  @media (max-width: 480px) {
+    .opts { grid-template-columns: 1fr; }
+    h1 { font-size: 28px; }
+    .orb-wrap { width: 260px; height: 260px; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+
+  <!-- SETUP -->
+  <section id="screen-setup" class="screen active" aria-labelledby="setup-title">
+    <p class="eyebrow">Daily practice</p>
+    <h1 id="setup-title" tabindex="-1">A few minutes, on purpose.</h1>
+    <p class="sub">Answer two questions and a routine is built for you — same answers, same routine, every time.</p>
+
+    <div class="qblock">
+      <p class="qlabel">What's your main goal?</p>
+      <div class="opts" id="goal-opts">
+        <button type="button" class="opt" data-val="stress" aria-pressed="false">Reduce stress and anxiety<small>Settle the nervous system</small></button>
+        <button type="button" class="opt" data-val="focus" aria-pressed="false">Better focus<small>Train steady attention</small></button>
+        <button type="button" class="opt" data-val="sleep" aria-pressed="false">Better sleep<small>Wind down for rest</small></button>
+        <button type="button" class="opt" data-val="wellbeing" aria-pressed="false">General wellbeing<small>A balanced daily reset</small></button>
+      </div>
+    </div>
+
+    <div class="qblock">
+      <p class="qlabel">How much time can you commit daily?</p>
+      <div class="opts" id="time-opts">
+        <button type="button" class="opt" data-val="5" aria-pressed="false">2–5 minutes<small>Short and consistent</small></button>
+        <button type="button" class="opt" data-val="12" aria-pressed="false">10–15 minutes<small>The sweet spot</small></button>
+        <button type="button" class="opt" data-val="25" aria-pressed="false">20–30 minutes<small>A deeper sit</small></button>
+        <button type="button" class="opt" data-val="varies" aria-pressed="false">Varies day to day<small>Choose each session</small></button>
+      </div>
+      <div class="slider-row" id="varies-slider" hidden>
+        <input type="range" min="3" max="30" step="1" value="12" id="time-range" aria-label="Session length in minutes">
+        <span class="slider-val" id="time-range-val">12 min</span>
+      </div>
+    </div>
+
+    <div class="btnrow">
+      <button type="button" class="btn" id="build-btn" disabled>Build my routine</button>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section id="screen-plan" class="screen" aria-labelledby="plan-title">
+    <p class="eyebrow" id="plan-eyebrow">Your routine</p>
+    <h1 id="plan-title" tabindex="-1">Today's practice</h1>
+    <p class="sub" id="plan-sub"></p>
+
+    <div class="plan-list" id="plan-list"></div>
+    <div class="total-row">
+      <span>Total session</span>
+      <strong id="plan-total" aria-live="polite">12 min</strong>
+    </div>
+
+    <div class="qblock" id="breath-style-block">
+      <p class="qlabel">Breathing style</p>
+      <div class="breath-choice">
+        <button type="button" class="opt selected" data-breath="box" aria-pressed="true">Box 4-4-4-4<small>Steady and even</small></button>
+        <button type="button" class="opt" data-breath="478" aria-pressed="false">4-7-8<small>Long, calming exhale</small></button>
+      </div>
+    </div>
+
+    <div class="btnrow">
+      <button type="button" class="btn" id="start-btn">Begin session</button>
+      <button type="button" class="btn ghost" id="back-btn">Change answers</button>
+    </div>
+  </section>
+
+  <!-- SESSION -->
+  <section id="screen-session" class="screen" aria-labelledby="ex-name">
+    <div class="session-top">
+      <p class="exstep" id="ex-step">Exercise 1 of 3</p>
+      <h1 class="exname" tabindex="-1"><span id="ex-name" aria-live="polite">Breathing</span><button type="button" class="info-btn inline" id="session-info-btn" aria-label="About this practice">i</button></h1>
+    </div>
+
+    <div class="orb-wrap">
+      <svg class="ring" viewBox="0 0 300 300" aria-hidden="true">
+        <circle class="track" cx="150" cy="150" r="144"></circle>
+        <circle class="prog" id="ring-prog" cx="150" cy="150" r="144"></circle>
+      </svg>
+      <div class="orb" id="orb"><span class="phase" id="orb-phase" aria-live="polite" aria-atomic="true">Ready</span></div>
+    </div>
+
+    <div class="timers">
+      <div class="t"><div class="big" id="ex-timer" role="timer">0:00</div><div class="lbl">This exercise</div></div>
+      <div class="t"><div class="big" id="total-timer" role="timer">0:00</div><div class="lbl">Session left</div></div>
+    </div>
+
+    <p class="guide" id="guide-text" aria-live="polite" aria-atomic="true"></p>
+
+    <div class="session-controls">
+      <button type="button" class="btn" id="pause-btn">Pause</button>
+      <button type="button" class="btn ghost" id="skip-btn">Skip exercise</button>
+      <button type="button" class="btn ghost" id="end-btn">End session</button>
+    </div>
+
+    <div class="overall-bar"><div class="fill" id="overall-fill"></div></div>
+    <p class="overall-lbl" id="overall-lbl">Session progress</p>
+  </section>
+
+  <!-- DONE -->
+  <section id="screen-done" class="screen" aria-labelledby="done-title">
+    <div class="done-center">
+      <div class="mark">✓</div>
+      <h1 id="done-title" tabindex="-1">Practice complete.</h1>
+      <p class="sub" id="done-sub">Well done. The benefit comes from showing up again tomorrow.</p>
+      <div class="btnrow centered">
+        <button type="button" class="btn" id="again-btn">Practice again</button>
+        <button type="button" class="btn ghost" id="redo-btn">Change my answers</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="footer-note">
+    Sound on for gentle chimes at each transition ·
+    <button type="button" class="linklike" id="reset-link">Reset preferences</button>
+  </p>
+</main>
+
+<div class="modal-backdrop" id="info-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+    <h2 id="modal-title">Practice</h2>
+    <h3>Why it matters</h3>
+    <p id="modal-why"></p>
+    <h3>How it works</h3>
+    <p id="modal-how"></p>
+    <div class="close-row"><button type="button" class="btn ghost" id="modal-close">Close</button></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- Exercise library ---------- */
+const EXERCISES = {
+  breathing: {
+    name: "Paced breathing",
+    desc: "Follow the orb — it sets your rhythm",
+    type: "breath",
+    why: "Slow, paced breathing is the fastest lever you have on your own nervous system. Anxiety keeps the body in a low-grade fight-or-flight state; extending and evening out the breath directly signals safety to the brain, lowering heart rate and muscle tension within a few minutes.",
+    how: "Breathing slowly stimulates the vagus nerve, which activates the parasympathetic (\"rest and digest\") branch of the nervous system. Longer exhales in particular slow the heart via the baroreflex. Box breathing keeps everything even and steady; 4-7-8 weights the exhale for a stronger calming effect, which is why it's often used before sleep or during an anxiety spike."
+  },
+  bodyscan: {
+    name: "Body scan",
+    desc: "Move attention slowly through the body",
+    type: "guided",
+    why: "Stress lives in the body as much as the mind — clenched jaws, raised shoulders, a tight belly — often without you noticing. The body scan trains you to detect that tension early, before it snowballs into a stressed mood, and to relate to discomfort with curiosity instead of alarm.",
+    how: "You move attention slowly from head to toe, simply noticing sensations without trying to change them. This does two things: it interrupts rumination by anchoring attention in physical sensation, and it builds interoception — your accuracy at reading internal body signals. Over weeks, this is where much of mindfulness's measured anxiety reduction accumulates.",
+    prompts: [
+      "Bring attention to the crown of your head and forehead.",
+      "Soften the small muscles around your eyes and jaw.",
+      "Notice your neck and shoulders. Let them be heavy.",
+      "Feel your arms, down to the fingertips.",
+      "Rest attention on the chest, rising and falling.",
+      "Notice the belly softening with each breath.",
+      "Bring awareness to your hips and lower back.",
+      "Feel your legs — thighs, knees, calves.",
+      "Notice your feet where they meet the floor.",
+      "Hold the whole body in awareness, all at once."
+    ]
+  },
+  open: {
+    name: "Open awareness",
+    desc: "Let sounds and sensations come and go",
+    type: "guided",
+    why: "Anxiety often isn't caused by a thought itself but by grabbing onto it and spinning it into a story. Open awareness practices the skill of letting thoughts and sensations pass without engaging — which weakens the loop of worry over time.",
+    how: "Instead of focusing on one object like the breath, you rest attention wide open and observe whatever arises — sounds, sensations, thoughts — as passing events. Each time you notice a thought and let it go rather than following it, you're strengthening the mental habit of \"decentering\": seeing thoughts as events in the mind rather than facts about the world.",
+    prompts: [
+      "Let attention rest wide open, like a clear sky.",
+      "Notice sounds arriving and fading, without chasing them.",
+      "When a thought appears, let it pass like a cloud.",
+      "Notice sensations in the body as they rise and dissolve.",
+      "Nothing to fix, nothing to hold. Just noticing.",
+      "Rest in simple awareness of this moment."
+    ]
+  },
+  counting: {
+    name: "Breath counting",
+    desc: "Count breaths one to ten, then begin again",
+    type: "guided",
+    why: "Focus is trainable, and this is the classic drill for it. The count gives your mind a clear task with instant feedback — the moment you drift, you lose the count, so you know immediately and can practice returning.",
+    how: "You count each exhale up to ten, then start again at one. Every time you notice you've wandered and come back is one repetition for your attention — the noticing-and-returning is the exercise, not unbroken concentration. Losing count isn't failure; it's the moment the training actually happens.",
+    prompts: [
+      "Count each exhale silently: one, two, three…",
+      "When you reach ten, gently begin again at one.",
+      "Lost count? That's the practice. Start again at one.",
+      "Keep the counting light — a whisper in the mind.",
+      "Each return to one is a repetition for your attention.",
+      "Stay with the breath. The count is just a handrail."
+    ]
+  },
+  kindness: {
+    name: "Loving-kindness",
+    desc: "Offer simple phrases of goodwill",
+    type: "guided",
+    why: "A lot of everyday stress is self-generated — harsh self-talk, replaying social friction, low-grade irritation with others. Loving-kindness practice directly counters that by deliberately generating warmth, which research links to increased positive emotion and reduced self-criticism over time.",
+    how: "You silently repeat simple phrases of goodwill — \"may I be safe, may I be well\" — first toward yourself, then a loved one, then a neutral person, then everyone. The phrases aren't magic words; they're a way of repeatedly pointing the mind toward warmth until that orientation becomes easier to access in daily life.",
+    prompts: [
+      "Silently repeat: may I be safe. May I be well.",
+      "May I be at ease. May I be kind to myself.",
+      "Bring to mind someone you care about.",
+      "May you be safe. May you be well. May you be at ease.",
+      "Now someone neutral — a stranger from your day.",
+      "May you be well. May you be at ease.",
+      "Let the wish widen to everyone, everywhere.",
+      "May all beings be safe, well, and at ease."
+    ]
+  }
+};
+
+/* ---------- Deterministic routine map ---------- */
+/* Each goal maps to an ordered list of [exerciseKey, fraction of total time]. */
+const ROUTINES = {
+  stress:    { label: "Calm the nervous system", breath: "box",
+               mix: [["breathing", 0.25], ["bodyscan", 0.50], ["open", 0.25]] },
+  focus:     { label: "Train steady attention", breath: "box",
+               mix: [["breathing", 0.25], ["counting", 0.75]] },
+  sleep:     { label: "Wind down for rest", breath: "478",
+               mix: [["breathing", 0.40], ["bodyscan", 0.60]] },
+  wellbeing: { label: "A balanced reset", breath: "box",
+               mix: [["breathing", 0.25], ["bodyscan", 0.40], ["kindness", 0.35]] }
+};
+
+const BREATH_PATTERNS = {
+  box:   [["Breathe in", 4], ["Hold", 4], ["Breathe out", 4], ["Hold", 4]],
+  "478": [["Breathe in", 4], ["Hold", 7], ["Breathe out", 8]]
+};
+
+/* ---------- State ---------- */
+let state = {
+  goal: null,
+  timeChoice: null,     // "5" | "12" | "25" | "varies"
+  totalMin: 12,
+  breath: "box",
+  plan: []              // [{key, minutes}]
+};
+
+let session = {
+  idx: 0,
+  exLeft: 0,
+  totalLeft: 0,
+  totalAll: 0,
+  paused: false,
+  timer: null,
+  breathPhase: 0,
+  breathLeft: 0,
+  promptIdx: -1,
+  practicedSec: 0,
+  lastTickAt: 0,
+  breathLabel: "Ready"
+};
+
+/* ---------- Persistence (safe if storage unavailable) ---------- */
+function save() {
+  try { localStorage.setItem("practice-prefs", JSON.stringify({
+    goal: state.goal, timeChoice: state.timeChoice, totalMin: state.totalMin, breath: state.breath
+  })); } catch (e) {}
+}
+function load() {
+  try {
+    const raw = localStorage.getItem("practice-prefs");
+    if (!raw) return;
+    const p = JSON.parse(raw);
+    if (!p || typeof p !== "object" || !ROUTINES[p.goal]) return;
+
+    state.goal = p.goal;
+    state.breath = BREATH_PATTERNS[p.breath] ? p.breath : ROUTINES[p.goal].breath;
+    markSelected("#goal-opts", state.goal);
+
+    const validTimeChoices = ["5", "12", "25", "varies"];
+    if (validTimeChoices.includes(p.timeChoice)) {
+      state.timeChoice = p.timeChoice;
+      const savedMinutes = Number(p.totalMin);
+      state.totalMin = p.timeChoice === "varies" && Number.isInteger(savedMinutes) && savedMinutes >= 3 && savedMinutes <= 30
+        ? savedMinutes
+        : Number(p.timeChoice) || 12;
+      markSelected("#time-opts", state.timeChoice);
+      if (state.timeChoice === "varies") {
+        document.getElementById("varies-slider").hidden = false;
+        document.getElementById("time-range").value = state.totalMin;
+        document.getElementById("time-range-val").textContent = state.totalMin + " min";
+      }
+    }
+    checkReady();
+  } catch (e) {}
+}
+function clearPrefs() {
+  try { localStorage.removeItem("practice-prefs"); } catch (e) {}
+  location.reload();
+}
+
+/* ---------- Helpers ---------- */
+const $ = (sel) => document.querySelector(sel);
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  const screen = $(id);
+  screen.classList.add("active");
+  const heading = screen.querySelector("h1");
+  if (heading) heading.focus();
+}
+function fmt(sec) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return m + ":" + (s < 10 ? "0" : "") + s;
+}
+function markSelected(groupSel, val) {
+  document.querySelectorAll(groupSel + " .opt").forEach(o => {
+    const selected = o.dataset.val === val;
+    o.classList.toggle("selected", selected);
+    o.setAttribute("aria-pressed", String(selected));
+  });
+}
+
+/* ---------- Chime (WebAudio, no files needed) ---------- */
+let audioCtx = null;
+function chime(freq) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq || 523.25;
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.18, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + 1.7);
+  } catch (e) {}
+}
+
+/* ---------- Setup screen ---------- */
+document.querySelectorAll("#goal-opts .opt").forEach(btn => {
+  btn.addEventListener("click", () => {
+    state.goal = btn.dataset.val;
+    state.breath = ROUTINES[state.goal].breath;
+    markSelected("#goal-opts", state.goal);
+    checkReady();
+  });
+});
+document.querySelectorAll("#time-opts .opt").forEach(btn => {
+  btn.addEventListener("click", () => {
+    state.timeChoice = btn.dataset.val;
+    markSelected("#time-opts", state.timeChoice);
+    const varies = state.timeChoice === "varies";
+    $("#varies-slider").hidden = !varies;
+    state.totalMin = varies ? parseInt($("#time-range").value, 10) : parseInt(state.timeChoice, 10);
+    checkReady();
+  });
+});
+$("#time-range").addEventListener("input", (e) => {
+  state.totalMin = parseInt(e.target.value, 10);
+  $("#time-range-val").textContent = state.totalMin + " min";
+});
+function checkReady() {
+  $("#build-btn").disabled = !(state.goal && state.timeChoice);
+}
+$("#build-btn").addEventListener("click", () => { buildPlan(); save(); showPlan(); });
+$("#reset-link").addEventListener("click", clearPrefs);
+
+/* ---------- Deterministic plan builder ---------- */
+function buildPlan() {
+  const r = ROUTINES[state.goal];
+  const total = state.totalMin;
+  // Allocate whole minutes by fraction, minimum 1, then fix rounding on the longest slot.
+  let plan = r.mix.map(([key, frac]) => ({ key, minutes: Math.max(1, Math.round(total * frac)) }));
+  let diff = total - plan.reduce((s, p) => s + p.minutes, 0);
+  if (diff !== 0) {
+    let longest = plan.reduce((a, b) => (b.minutes >= a.minutes ? b : a));
+    longest.minutes = Math.max(1, longest.minutes + diff);
+  }
+  state.plan = plan;
+}
+
+/* ---------- Plan screen ---------- */
+function showPlan() {
+  const r = ROUTINES[state.goal];
+  $("#plan-eyebrow").textContent = r.label;
+  $("#plan-sub").textContent = "Built from your answers. Adjust each exercise's timer if you like — the ring in the session drains as each one runs.";
+  renderPlanList();
+  $("#breath-style-block").hidden = !state.plan.some(p => p.key === "breathing");
+  document.querySelectorAll("[data-breath]").forEach(b => {
+    const selected = b.dataset.breath === state.breath;
+    b.classList.toggle("selected", selected);
+    b.setAttribute("aria-pressed", String(selected));
+  });
+  show("#screen-plan");
+}
+function renderPlanList(focusAfterRender) {
+  const list = $("#plan-list");
+  list.replaceChildren();
+  state.plan.forEach((p, index) => {
+    const ex = EXERCISES[p.key];
+    const row = document.createElement("div");
+    row.className = "plan-item";
+
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    dot.setAttribute("aria-hidden", "true");
+
+    const info = document.createElement("div");
+    info.className = "info";
+    const name = document.createElement("div");
+    name.className = "name";
+    name.textContent = ex.name;
+    const desc = document.createElement("div");
+    desc.className = "desc";
+    desc.textContent = ex.desc;
+    info.append(name, desc);
+
+    const stepper = document.createElement("div");
+    stepper.className = "stepper";
+    const minus = document.createElement("button");
+    minus.type = "button";
+    minus.dataset.step = "minus";
+    minus.setAttribute("aria-label", "One minute less for " + ex.name);
+    minus.textContent = "−";
+    const minutes = document.createElement("span");
+    minutes.className = "mins";
+    minutes.textContent = p.minutes + " min";
+    const plus = document.createElement("button");
+    plus.type = "button";
+    plus.dataset.step = "plus";
+    plus.setAttribute("aria-label", "One minute more for " + ex.name);
+    plus.textContent = "+";
+    stepper.append(minus, minutes, plus);
+
+    const infoButton = document.createElement("button");
+    infoButton.type = "button";
+    infoButton.className = "info-btn";
+    infoButton.setAttribute("aria-label", "About " + ex.name);
+    infoButton.textContent = "i";
+
+    minus.addEventListener("click", () => {
+      if (p.minutes > 1) {
+        p.minutes--;
+        renderPlanList({ index, step: "minus" });
+      }
+    });
+    plus.addEventListener("click", () => {
+      if (p.minutes < 45) {
+        p.minutes++;
+        renderPlanList({ index, step: "plus" });
+      }
+    });
+    infoButton.addEventListener("click", () => openInfo(p.key));
+    row.append(dot, info, stepper, infoButton);
+    list.appendChild(row);
+  });
+  const total = state.plan.reduce((s, p) => s + p.minutes, 0);
+  $("#plan-total").textContent = total + " min";
+  if (focusAfterRender) {
+    list.children[focusAfterRender.index]
+      .querySelector(`[data-step="${focusAfterRender.step}"]`)
+      .focus();
+  }
+}
+document.querySelectorAll("[data-breath]").forEach(b => {
+  b.addEventListener("click", () => {
+    state.breath = b.dataset.breath;
+    document.querySelectorAll("[data-breath]").forEach(x => {
+      const selected = x === b;
+      x.classList.toggle("selected", selected);
+      x.setAttribute("aria-pressed", String(selected));
+    });
+    save();
+  });
+});
+$("#back-btn").addEventListener("click", () => show("#screen-setup"));
+$("#start-btn").addEventListener("click", startSession);
+
+/* ---------- Session ---------- */
+const RING_LEN = 2 * Math.PI * 144;
+$("#ring-prog").style.strokeDasharray = RING_LEN;
+
+function startSession() {
+  clearInterval(session.timer);
+  session.timer = null;
+  session.idx = 0;
+  session.totalAll = state.plan.reduce((s, p) => s + p.minutes, 0) * 60;
+  session.totalLeft = session.totalAll;
+  session.practicedSec = 0;
+  session.paused = false;
+  $("#pause-btn").textContent = "Pause";
+  beginExercise(true);
+  $("#total-timer").textContent = fmt(session.totalLeft);
+  show("#screen-session");
+  // Flush the visible resting state so the first inhale expands smoothly.
+  $("#orb").getBoundingClientRect();
+  advanceBreath();
+  session.lastTickAt = Date.now();
+  session.timer = setInterval(tick, 1000);
+  chime(523.25);
+}
+
+function beginExercise(deferBreathStart = false) {
+  const p = state.plan[session.idx];
+  const ex = EXERCISES[p.key];
+  session.exLeft = p.minutes * 60;
+  session.exTotal = session.exLeft;
+  session.promptIdx = -1;
+  $("#ex-step").textContent = "Exercise " + (session.idx + 1) + " of " + state.plan.length;
+  $("#ex-name").textContent = ex.name;
+  $("#ex-timer").textContent = fmt(session.exLeft);
+  const orb = $("#orb");
+  orb.classList.remove("hold");
+  if (ex.type === "breath") {
+    $("#guide-text").textContent = "Let the orb set your pace. In through the nose, out through the mouth.";
+    session.breathPhase = -1;
+    session.breathLeft = 0;
+    session.breathLabel = "Ready";
+    $("#orb-phase").textContent = "Ready";
+    orb.style.transition = "none";
+    orb.style.transform = "translate(-50%, -50%) scale(1)";
+    if (!deferBreathStart) advanceBreath();
+  } else {
+    orb.style.transition = "transform 2s ease, background 0.6s ease, border-color 0.6s ease";
+    orb.style.transform = "translate(-50%, -50%) scale(1.15)";
+    $("#orb-phase").textContent = ex.name;
+    nextPrompt();
+  }
+  updateRing();
+}
+
+function advanceBreath() {
+  const pattern = BREATH_PATTERNS[state.breath];
+  session.breathPhase = (session.breathPhase + 1) % pattern.length;
+  const [label, secs] = pattern[session.breathPhase];
+  session.breathLeft = secs;
+  session.breathLabel = label;
+  renderBreathPhase(secs);
+}
+
+function renderBreathPhase(secs) {
+  const label = session.breathLabel;
+  const orb = $("#orb");
+  $("#orb-phase").textContent = label;
+  orb.classList.toggle("hold", label === "Hold");
+  orb.style.transition = "transform " + secs + "s linear, background 0.6s ease, border-color 0.6s ease";
+  if (label === "Breathe in") orb.style.transform = "translate(-50%, -50%) scale(1.55)";
+  else if (label === "Breathe out") orb.style.transform = "translate(-50%, -50%) scale(1)";
+}
+
+function nextPrompt() {
+  const p = state.plan[session.idx];
+  const ex = EXERCISES[p.key];
+  if (!ex.prompts) return;
+  const step = Math.max(10, Math.floor(session.exTotal / ex.prompts.length));
+  const elapsed = session.exTotal - session.exLeft;
+  const idx = Math.min(ex.prompts.length - 1, Math.floor(elapsed / step));
+  if (idx !== session.promptIdx) {
+    session.promptIdx = idx;
+    $("#guide-text").textContent = ex.prompts[idx];
+  }
+}
+
+function tick() {
+  if (session.paused) return;
+  const now = Date.now();
+  const elapsedSeconds = Math.floor((now - session.lastTickAt) / 1000);
+  if (elapsedSeconds < 1) return;
+  session.lastTickAt += elapsedSeconds * 1000;
+
+  for (let i = 0; i < elapsedSeconds && session.timer; i++) {
+    advanceSessionSecond();
+  }
+}
+
+function advanceSessionSecond() {
+  session.exLeft--;
+  session.totalLeft--;
+  session.practicedSec++;
+  const p = state.plan[session.idx];
+  const ex = EXERCISES[p.key];
+
+  if (ex.type === "breath") {
+    session.breathLeft--;
+    if (session.breathLeft <= 0) advanceBreath();
+  } else {
+    nextPrompt();
+  }
+
+  if (session.exLeft <= 0) {
+    session.idx++;
+    if (session.idx >= state.plan.length) return finish();
+    chime(587.33);
+    beginExercise();
+  }
+  $("#ex-timer").textContent = fmt(Math.max(0, session.exLeft));
+  $("#total-timer").textContent = fmt(Math.max(0, session.totalLeft));
+  updateRing();
+}
+
+function updateRing() {
+  const fracEx = session.exTotal ? session.exLeft / session.exTotal : 0;
+  $("#ring-prog").style.strokeDashoffset = RING_LEN * (1 - fracEx);
+  const doneFrac = 1 - (session.totalLeft / session.totalAll);
+  $("#overall-fill").style.width = (doneFrac * 100).toFixed(1) + "%";
+  const doneMin = Math.round((session.totalAll - session.totalLeft) / 60);
+  const allMin = Math.round(session.totalAll / 60);
+  $("#overall-lbl").textContent = doneMin + " of " + allMin + " minutes";
+}
+
+function setPaused(paused) {
+  session.paused = paused;
+  $("#pause-btn").textContent = session.paused ? "Resume" : "Pause";
+  const exercise = EXERCISES[state.plan[session.idx].key];
+  if (session.paused) {
+    if (exercise.type === "breath") {
+      const orb = $("#orb");
+      const currentTransform = getComputedStyle(orb).transform;
+      orb.style.transition = "none";
+      orb.style.transform = currentTransform;
+    }
+    $("#orb-phase").textContent = "Paused";
+  } else {
+    session.lastTickAt = Date.now();
+    if (exercise.type === "breath") renderBreathPhase(session.breathLeft);
+    else $("#orb-phase").textContent = exercise.name;
+  }
+}
+$("#pause-btn").addEventListener("click", () => {
+  setPaused(!session.paused);
+});
+$("#skip-btn").addEventListener("click", () => {
+  session.totalLeft -= session.exLeft;
+  session.idx++;
+  if (session.idx >= state.plan.length) return finish();
+  chime(587.33);
+  beginExercise();
+});
+$("#end-btn").addEventListener("click", finish);
+
+function finish() {
+  clearInterval(session.timer);
+  session.timer = null;
+  chime(659.25);
+  if (session.practicedSec < 60) {
+    $("#done-sub").textContent = "You practiced for less than a minute. The benefit comes from showing up again tomorrow.";
+  } else {
+    const doneMin = Math.round(session.practicedSec / 60);
+    $("#done-sub").textContent = "You practiced for about " + doneMin +
+      " minute" + (doneMin === 1 ? "" : "s") + ". The benefit comes from showing up again tomorrow.";
+  }
+  show("#screen-done");
+}
+
+$("#again-btn").addEventListener("click", () => { buildPlan(); showPlan(); });
+$("#redo-btn").addEventListener("click", () => show("#screen-setup"));
+
+/* ---------- Info modal ---------- */
+let modalTrigger = null;
+function openInfo(key) {
+  const ex = EXERCISES[key];
+  modalTrigger = document.activeElement;
+  $("#modal-title").textContent = ex.name;
+  $("#modal-why").textContent = ex.why;
+  $("#modal-how").textContent = ex.how;
+  // Pause a running session so reading doesn't eat practice time.
+  if ($("#screen-session").classList.contains("active") && !session.paused) {
+    setPaused(true);
+  }
+  $("#info-modal").classList.add("open");
+  $("#modal-close").focus();
+}
+function closeInfo() {
+  if (!$("#info-modal").classList.contains("open")) return;
+  $("#info-modal").classList.remove("open");
+  if (modalTrigger instanceof HTMLElement) modalTrigger.focus();
+}
+$("#modal-close").addEventListener("click", closeInfo);
+$("#info-modal").addEventListener("click", (e) => { if (e.target === $("#info-modal")) closeInfo(); });
+document.addEventListener("keydown", (e) => {
+  if (!$("#info-modal").classList.contains("open")) return;
+  if (e.key === "Escape") closeInfo();
+  if (e.key === "Tab") {
+    e.preventDefault();
+    $("#modal-close").focus();
+  }
+});
+$("#session-info-btn").addEventListener("click", () => openInfo(state.plan[session.idx].key));
+
+load();
+</script>
+</body>
+</html>
